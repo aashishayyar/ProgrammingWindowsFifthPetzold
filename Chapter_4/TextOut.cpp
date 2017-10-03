@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "sysmets.h"
 
 // Macros for Error Checking 
 #define ERRORBOX1(lpText, lpCaption) {																		 \
@@ -6,8 +7,8 @@
 										ExitProcess(EXIT_FAILURE);											 \
 									}
 
-#define ERRORBOX2(hwnd, lpText, lpCaption) {																		 \
-										MessageBox((HWND)NULL, TEXT(lpText), TEXT(lpCaption), MB_ICONERROR)	 \
+#define ERRORBOX2(hwnd, lpText, lpCaption) {																 \
+										MessageBox((HWND)NULL, TEXT(lpText), TEXT(lpCaption), MB_ICONERROR); \
 									 	DestroyWindow(hwnd);												 \
 									 }
 
@@ -27,7 +28,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdSh
 	TCHAR 		szAppName[] = TEXT("Template Application");
 
 	// Acquire brush to paint the window background 
-	hBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	hBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	if (hBrush == NULL)
 		ERRORBOX1("Failed to acquire brush to paint window background", "Error");
 	
@@ -96,11 +97,47 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdSh
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
+	static int  cxChar, cxCaps, cyChar;
+	HDC 		hdc;
+	int 		i;
+	PAINTSTRUCT ps;
+	TEXTMETRIC  tm;
+	TCHAR 		szBuffer[10];
+
 	switch(iMsg)
 	{
 		case WM_CREATE:
+			hdc = GetDC(hwnd);
+			if (hdc == NULL)
+				ERRORBOX2(hwnd, "Failed to acquire Device Context", "Error");
+
+			GetTextMetrics(hdc, &tm)	;
+			cxChar = tm.tmAveCharWidth	;
+			cxCaps = (tm.tmPitchAndFamily & 1 ? 3 : 2) * cxChar / 2;
+			cyChar = tm.tmHeight + tm.tmExternalLeading;
+			ReleaseDC(hwnd, hdc);
 			break;
+
 		case WM_PAINT:
+			hdc = BeginPaint(hwnd, &ps);
+
+			for (i = 0; i < NUMLINES ; i++)
+			{
+				TextOut(hdc, 0, cyChar * i,
+						sysmetrics[i].szLabel,
+						lstrlen (sysmetrics[i].szLabel));
+				TextOut(hdc, 22 * cxCaps, cyChar * i,
+						sysmetrics[i].szDesc,
+						lstrlen (sysmetrics[i].szDesc));
+
+				SetTextAlign(hdc, TA_RIGHT | TA_TOP);
+
+				TextOut(hdc, 22 * cxCaps + 40 * cxChar,
+						cyChar  * i, szBuffer, wsprintf(szBuffer, TEXT("%5d"), GetSystemMetrics(sysmetrics[i].iIndex)));
+				SetTextAlign(hdc, TA_LEFT | TA_TOP);
+			}
+			EndPaint(hwnd, &ps);
+
 			break;
 		case WM_DESTROY:
 			PostQuitMessage(0);	
