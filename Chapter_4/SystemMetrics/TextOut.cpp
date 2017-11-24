@@ -97,6 +97,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdSh
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
+	/*VAriable required for TextOut()*/
 	static int  cxChar, cxCaps, cyChar;
 	HDC 		hdc;
 	int 		i;
@@ -107,6 +108,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	switch(iMsg)
 	{
 		case WM_CREATE:
+		/* To set the starting point of the TextOut()*/
 			hdc = GetDC(hwnd);
 			if (hdc == NULL)
 				ERRORBOX2(hwnd, "Failed to acquire Device Context", "Error");
@@ -119,6 +121,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case WM_PAINT:
+		/*Actually printing the characters */
 			hdc = BeginPaint(hwnd, &ps);
 
 			for (i = 0; i < NUMLINES ; i++)
